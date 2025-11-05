@@ -11,8 +11,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api", albumRoutes);
-app.use("/api", artistRoutes);
+app.use("/api/album", albumRoutes);
+app.use("/api/artist", artistRoutes);
 
 // fetch token once and refresh periodically
 await getAccessToken();

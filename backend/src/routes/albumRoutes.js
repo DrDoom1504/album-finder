@@ -3,7 +3,7 @@ import { getAlbum } from "../services/spotifyServices.js";
 
 const router = express.Router();
 
-// GET /api/albums/search?artistId=<id>
+
 router.get("/search", async (req, res) => {
     try {
         const { artistId } = req.query;
