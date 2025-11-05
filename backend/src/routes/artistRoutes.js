@@ -10,7 +10,8 @@ router.get("/search", async (req, res) => {
     const data = await getArtist(artist);
     res.json(data);
   }catch(err){
-    console.log(err);
+   console.error(err);
+        res.status(500).json({ error: "Error fetching albums" });
 }
 });
 
