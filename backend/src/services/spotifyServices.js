@@ -35,5 +35,30 @@ export async function getAlbum(artistId) {
         console.error("Error fetching albums:", error.message);
         throw error;
     }
+};
+
+
+export async function getSuggestion(query) {
+    const token = await getAccessToken();
+    try {
+        const response = await axios.get(
+            `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist&limit=5`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+        return response.data.artists.items.map(artist => ({
+            name: artist.name,
+            id: artist.id,
+            image: artist.images?.[0]?.url || null,
+            followers: artist.followers?.total,
+            genres: artist.genres,
+        }));
+    } catch (err) {
+        console.error("Error fetching suggestions:", err.message);
+        throw err;
+    }
 }
 

@@ -25,7 +25,6 @@ export async function getAccessToken() {
                 }
             );
             accessToken = response.data.access_token;
-            console.log(accessToken);
             tokenExpirationTime = now + (response.data.expires_in * 1000);
             console.log("✅ New access token fetched");
         } catch (err) {
