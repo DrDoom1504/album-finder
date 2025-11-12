@@ -15,7 +15,9 @@ app.use("/api/album", albumRoutes);
 app.use("/api/artist", artistRoutes);
 
 // fetch token once and refresh periodically
-await getAccessToken();
+
+    await getAccessToken();
+
 setInterval(getAccessToken, 55 * 60 * 1000);
 
 const port = process.env.PORT || 3000;
