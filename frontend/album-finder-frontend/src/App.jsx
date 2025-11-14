@@ -68,8 +68,8 @@ function App() {
   }, [query]);
 
   // Save artist to recent searches
-  const saveRecentSearch = (artistName, artistId) => {
-    recentSearchesStorage.add(artistName, artistId);
+  const saveRecentSearch = (artistName, artistId,artistFollowers,artistImage) => {
+    recentSearchesStorage.add(artistName, artistId,artistFollowers,artistImage);
     setRecentSearches(recentSearchesStorage.get());
   };
 
@@ -119,7 +119,7 @@ function App() {
       } else {
         setAlbums(data);
         if (selectedArtist) {
-          saveRecentSearch(selectedArtist.name, artistId);
+          saveRecentSearch(selectedArtist.name, artistId,selectedArtist.followers,selectedArtist.image);
         }
       }
       setSelectedArtist(null);
@@ -130,6 +130,16 @@ function App() {
       setLoadingAlbums(false);
     }
   };
+
+  const handleRemoveRecent = (id) => {
+  const updated = recentSearchesStorage.remove(id);
+  setRecentSearches(updated);
+};
+
+const handleClearAll = () => {
+  recentSearchesStorage.clear();
+  setRecentSearches([]);
+};
 
   return (
     <div
@@ -158,6 +168,8 @@ function App() {
         onQueryChange={handleQueryChange}
         onFocus={handleInputFocus}
         onSelectArtist={handleSelectArtist}
+        onRemoveRecent={handleRemoveRecent}
+        onClearAll={handleClearAll}
       />
 
       {/* Loading State */}
