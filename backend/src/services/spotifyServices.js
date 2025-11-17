@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { all } from "axios";
 import { getAccessToken } from "../utils/getAccessToken.js";
 
 export async function getArtist(artistName) {
@@ -21,22 +21,43 @@ export async function getArtist(artistName) {
 
 export async function getAlbum(artistId) {
     const token = await getAccessToken();
+
     try {
         const res = await axios.get(
-            `https://api.spotify.com/v1/artists/${artistId}/albums?limit=5`,
+            `https://api.spotify.com/v1/artists/${artistId}/albums?limit=50&include_groups=album`,
             {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                },
+                headers: { Authorization: `Bearer ${token}` },
             }
         );
-        return res.data.items;
+
+        // Remove duplicates (clean album names)
+        const unique = {};
+        res.data.items.forEach(album => {
+            const cleanedName = album.name
+                .toLowerCase()
+                .replace(/deluxe|remaster|expanded|edition|clean|explicit/g, "")
+                .trim();
+
+            if (!unique[cleanedName]) {
+                unique[cleanedName] = album;
+            }
+        });
+
+        const cleanedAlbums = Object.values(unique);
+
+        // 🔥 Sort albums by popularity proxy = release date
+        cleanedAlbums.sort((a, b) => 
+            new Date(b.release_date) - new Date(a.release_date)
+        );
+
+        // Return top 5 most recent albums
+        return cleanedAlbums.slice(0, 5);
+
     } catch (error) {
         console.error("Error fetching albums:", error.message);
         throw error;
     }
-};
-
+}
 
 export async function getSuggestion(query) {
     const token = await getAccessToken();
