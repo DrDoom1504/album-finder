@@ -45,7 +45,7 @@ export async function getAlbum(artistId) {
 
         const cleanedAlbums = Object.values(unique);
 
-        // 🔥 Sort albums by popularity proxy = release date
+       
         cleanedAlbums.sort((a, b) => 
             new Date(b.release_date) - new Date(a.release_date)
         );
