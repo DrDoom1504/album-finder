@@ -1,17 +1,21 @@
-import axios, { all } from "axios";
+import axios from "axios";
 import { getAccessToken } from "../utils/getAccessToken.js";
 
 export async function getArtist(artistName) {
     const token = await getAccessToken();
+    if (!token) throw new Error("Failed to get access token");
+    
     try {
         const res = await axios.get(
             `https://api.spotify.com/v1/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`,
             {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                },
+                headers: { Authorization: `Bearer ${token}` },
             }
         );
+        
+        if (!res.data.artists.items.length) {
+            throw new Error(`Artist "${artistName}" not found`);
+        }
         return res.data.artists.items[0];
     } catch (error) {
         console.error("Error fetching artist:", error.message);
@@ -21,6 +25,7 @@ export async function getArtist(artistName) {
 
 export async function getAlbum(artistId) {
     const token = await getAccessToken();
+    if (!token) throw new Error("Failed to get access token");
 
     try {
         const res = await axios.get(
@@ -30,12 +35,23 @@ export async function getAlbum(artistId) {
             }
         );
 
-        // Remove duplicates (clean album names)
+        if (!res.data.items || res.data.items.length === 0) {
+            return [];
+        }
+
+        
+        res.data.items.sort((a, b) => {
+            const dateA = new Date(a.release_date);
+            const dateB = new Date(b.release_date);
+            return dateB - dateA;
+        });
         const unique = {};
         res.data.items.forEach(album => {
             const cleanedName = album.name
                 .toLowerCase()
                 .replace(/deluxe|remaster|expanded|edition|clean|explicit/g, "")
+                .replace(/[\(\[\]\)]/g, "")
+                .replace(/\s+/g, " ")
                 .trim();
 
             if (!unique[cleanedName]) {
@@ -45,12 +61,7 @@ export async function getAlbum(artistId) {
 
         const cleanedAlbums = Object.values(unique);
 
-       
-        cleanedAlbums.sort((a, b) => 
-            new Date(b.release_date) - new Date(a.release_date)
-        );
-
-        // Return top 5 most recent albums
+        
         return cleanedAlbums.slice(0, 5);
 
     } catch (error) {
@@ -61,15 +72,16 @@ export async function getAlbum(artistId) {
 
 export async function getSuggestion(query) {
     const token = await getAccessToken();
+    if (!token) throw new Error("Failed to get access token");
+    
     try {
         const response = await axios.get(
             `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist&limit=5`,
             {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
+                headers: { Authorization: `Bearer ${token}` }
             }
         );
+        
         return response.data.artists.items.map(artist => ({
             name: artist.name,
             id: artist.id,
@@ -77,9 +89,8 @@ export async function getSuggestion(query) {
             followers: artist.followers?.total,
             genres: artist.genres,
         }));
-    } catch (err) {
-        console.error("Error fetching suggestions:", err.message);
-        throw err;
+    } catch (error) {
+        console.error("Error fetching suggestions:", error.message);
+        throw error;
     }
 }
-
