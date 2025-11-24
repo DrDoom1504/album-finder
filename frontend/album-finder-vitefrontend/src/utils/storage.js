@@ -1,6 +1,6 @@
 export const recentSearchesStorage = {
   KEY: "recentSearches",
-  MAX_ITEMS: 8,
+  MAX_ITEMS: 5,
   get: () => {
     try {
       const raw = localStorage.getItem(recentSearchesStorage.KEY);

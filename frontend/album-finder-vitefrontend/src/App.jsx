@@ -6,8 +6,6 @@ import ArtistAlbumsPage from "./pages/ArtistAlbumPage";
 import AlbumPage from "./pages/AlbumPage";
 import Header from "./components/Header";
 import FloatingPlayer from "./components/FloatingPlayer";
-import "./App.css";
-import "./index.css";
 
 export default function App(){
   return (
