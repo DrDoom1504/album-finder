@@ -1,18 +1,21 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
 import AlbumCard from "../components/AlbumCard";
-import ArtistCard from "../components/ArtistCard";
 import { suggestArtists, getAlbumsByArtist } from "../api/spotify";
 import { recentSearchesStorage } from "../utils/storage.js";
 
-export default function Home(){
+export default function Home() {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [recent, setRecent] = useState(recentSearchesStorage.get());
   const [albums, setAlbums] = useState([]);
+  const navigate = useNavigate(); // ✅ Fixed: lowercase 'n'
 
-  useEffect(()=>{ setRecent(recentSearchesStorage.get()); },[]);
+  useEffect(() => {
+    setRecent(recentSearchesStorage.get());
+  }, []);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -20,28 +23,38 @@ export default function Home(){
       return;
     }
     setLoadingSuggestions(true);
-    const id = setTimeout(async ()=>{
-      try{
+    const id = setTimeout(async () => {
+      try {
         const res = await suggestArtists(query);
         setSuggestions(res);
-      }catch(err){
+      } catch (err) {
         setSuggestions([]);
-      }finally{
+      } finally {
         setLoadingSuggestions(false);
       }
     }, 300);
-    return ()=>clearTimeout(id);
-  },[query]);
+    return () => clearTimeout(id);
+  }, [query]);
 
   const handleSelectArtist = async (artistId, artistName) => {
-    // fetch albums and save recent
-    const data = await getAlbumsByArtist(artistId);
-    setAlbums(data || []);
-    const artistObj = suggestions.find(s => s.id === artistId) || recent.find(r=>r.id===artistId) || { id: artistId, name: artistName, image: null, followers: 0 };
+    // Save to recent searches
+    const artistObj =
+      suggestions.find((s) => s.id === artistId) ||
+      recent.find((r) => r.id === artistId) || {
+        id: artistId,
+        name: artistName,
+        image: null,
+        followers: 0,
+      };
     recentSearchesStorage.add(artistObj);
     setRecent(recentSearchesStorage.get());
+
+    // Clear search
     setQuery("");
     setSuggestions([]);
+
+    // ✅ Navigate to artist page
+    navigate(`/artist/${artistId}`);
   };
 
   const handleRemoveRecent = (id) => {
@@ -72,9 +85,13 @@ export default function Home(){
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Top Albums</h2>
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {albums.length ? albums.map(a => <AlbumCard album={a} key={a.id} />) : <div className="text-muted">Search an artist to load albums</div>}
+          {albums.length ? (
+            albums.map((a) => <AlbumCard album={a} key={a.id} />)
+          ) : (
+            <div className="text-muted">Search an artist to load albums</div>
+          )}
         </div>
       </section>
     </div>
-  )
+  );
 }
