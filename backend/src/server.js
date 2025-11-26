@@ -4,6 +4,7 @@ import express from "express";
 
 import albumRoutes from "./routes/albumRoutes.js";
 import artistRoutes from "./routes/artistRoutes.js";
+
 import { getAccessToken } from "./utils/getAccessToken.js";
 
 dotenv.config();
