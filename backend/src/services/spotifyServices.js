@@ -25,7 +25,6 @@ export async function getArtist(artistName) {
             artist => artist.name.toLowerCase() === searchQuery
         );
         
-        
         if (!bestMatch) {
             bestMatch = res.data.artists.items.reduce((closest, current) => {
                 return current.popularity > closest.popularity ? current : closest;
@@ -45,18 +44,18 @@ export async function getArtistById(artistId) {
     if (!token) throw new Error("Failed to get access token");
     
     try {
-        const res = await axios.get(
+        const response = await axios.get(
             `https://api.spotify.com/v1/artists/${artistId}`,
             {
                 headers: { Authorization: `Bearer ${token}` },
             }
         );
         
-        if (!res.data) {
+        if (!response.data) {
             throw new Error(`Artist with ID "${artistId}" not found`);
         }
         
-        return res.data;
+        return response.data;
     } catch (error) {
         console.error("Error fetching artist by ID:", error.message);
         throw error;
@@ -147,8 +146,6 @@ export async function getTopTracks(artistId) {
             }
         );
 
-        console.log("Response status:", response.status);
-        console.log("Tracks count:", response.data.tracks?.length);
 
         if (!response.data.tracks || response.data.tracks.length === 0) {
             console.log("No tracks found");
@@ -166,11 +163,32 @@ export async function getTopTracks(artistId) {
             externalUrl: track.external_urls?.spotify,
         }));
 
-
         return mappedTracks;
 
     } catch (err) {
         console.error("Error fetching top tracks:", err.message);
         throw err;
+    }
+}
+
+export async function getAlbumById(albumId) {
+    const token = await getAccessToken();
+    if (!token) throw new Error("Failed to get access token");
+
+    try {
+        const res = await axios.get(
+            `https://api.spotify.com/v1/albums/${albumId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (!res.data) {
+            throw new Error(`Album with ID "${albumId}" not found`);
+        }
+
+        // Return the album object as-is (it contains tracks.items)
+        return res.data;
+    } catch (error) {
+        console.error("Error fetching album by ID:", error.message);
+        throw error;
     }
 }
