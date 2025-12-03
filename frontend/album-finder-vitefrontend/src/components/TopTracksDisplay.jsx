@@ -1,6 +1,8 @@
 import React from "react";
+import { useAuth } from "../context/AuthContext";
 
 export default function TopTracksDisplay({ tracks, loading }) {
+  const auth = useAuth();
   if (loading) {
     return (
       <div className="mt-12">
@@ -33,8 +35,21 @@ export default function TopTracksDisplay({ tracks, loading }) {
           <div
             key={track.id}
             className="bg-white/5 hover:bg-white/10 p-4 rounded-lg transition cursor-pointer group"
-            onClick={() => {
-              if (track.externalUrl) {
+            onClick={async () => {
+              // Prefer SDK playback for premium users, otherwise preview or open Spotify
+              try {
+                const auth = useAuth();
+                if (auth?.isPremium && auth?.deviceId) {
+                  await auth.playSpotifyTrack(track.id);
+                  return;
+                }
+              } catch (e) {
+                // ignore
+              }
+
+              if (track.previewUrl) {
+                window.dispatchEvent(new CustomEvent("playPreview", { detail: { previewUrl: track.previewUrl, track } }));
+              } else if (track.externalUrl) {
                 window.open(track.externalUrl, "_blank");
               }
             }}
@@ -77,13 +92,37 @@ export default function TopTracksDisplay({ tracks, loading }) {
                 <div className="text-xs text-gray-500">popularity</div>
               </div>
 
+              {/* Preview play button (local) */}
+              {track.previewUrl && (
+                <button
+                  className="ml-4 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-full text-sm font-medium text-white transition"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.dispatchEvent(new CustomEvent("playPreview", { detail: { previewUrl: track.previewUrl, track } }));
+                  }}
+                >
+                  ▷ Preview
+                </button>
+              )}
+
               {/* Play Button on Spotify */}
               {track.externalUrl && (
                 <button
                   className="ml-4 px-4 py-2 bg-green-500 hover:bg-green-600 rounded-full text-sm font-bold text-black transition transform hover:scale-105"
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    window.open(track.externalUrl, "_blank");
+                    // If user is premium and device available, play via SDK
+                    if (auth?.isPremium && auth?.deviceId) {
+                      await auth.playSpotifyTrack(track.id);
+                      return;
+                    }
+
+                    // Prefer local preview playback when available
+                    if (track.previewUrl) {
+                      window.dispatchEvent(new CustomEvent("playPreview", { detail: { previewUrl: track.previewUrl, track } }));
+                    } else {
+                      window.open(track.externalUrl, "_blank");
+                    }
                   }}
                 >
                   ▶ Play

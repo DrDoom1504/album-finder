@@ -11,7 +11,7 @@ export default function Home() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [recent, setRecent] = useState(recentSearchesStorage.get());
   const [albums, setAlbums] = useState([]);
-  const navigate = useNavigate(); // ✅ Fixed: lowercase 'n'
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     setRecent(recentSearchesStorage.get());
