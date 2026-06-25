@@ -9,7 +9,8 @@ export default function SearchBar({
   loadingSuggestions,
   onSelectArtist,
   onRemoveRecent,
-  onClearAll
+  onClearAll,
+  onSearch,
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -19,7 +20,13 @@ export default function SearchBar({
   };
 
   return (
-    <div className="max-w-2xl mx-auto relative">
+    <form
+      className="max-w-2xl mx-auto relative"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSearch?.();
+      }}
+    >
       <input
         value={query}
         onChange={(e) => {
@@ -43,7 +50,7 @@ export default function SearchBar({
         onRemoveRecent={onRemoveRecent}
         onClearAll={onClearAll}
       />
-    </div>
+    </form>
   );
 }
 

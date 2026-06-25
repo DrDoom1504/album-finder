@@ -1,33 +1,32 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 
 export default function Header(){
   const auth = useAuth();
 
   return (
-    <header className="py-4 border-b border-white/6">
-      <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
+    <header className="py-5 border-b border-white/10 bg-[#060607]/80 backdrop-blur-xl">
+      <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <Link to="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-spotifyGreen rounded-full flex items-center justify-center text-black font-bold">AF</div>
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-spotifyGreen to-emerald-700 text-black font-black flex items-center justify-center shadow-lg shadow-emerald-500/15">
+            AF
+          </div>
           <div>
-            <h1 className="text-xl font-bold">Album Finder</h1>
-            <div className="text-sm text-muted">Discover albums like a pro</div>
+            <h1 className="text-2xl font-bold tracking-tight">Album Finder</h1>
+            <div className="text-sm text-muted">Discover albums with polish and speed</div>
           </div>
         </Link>
-        <nav className="flex items-center gap-4">
-          <a className="text-sm text-muted hover:text-white transition" href="https://github.com" target="_blank" rel="noreferrer">GitHub</a>
+        <nav className="flex flex-wrap items-center gap-3 justify-end">
           {!auth?.user ? (
-            <button onClick={auth?.login} className="text-sm px-3 py-1 bg-white/5 hover:bg-white/10 rounded">Login</button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link to="/login" className="text-sm px-4 py-2 bg-white/10 hover:bg-white/15 rounded-full transition">Login</Link>
+              <Link to="/signup" className="text-sm px-4 py-2 rounded-full bg-spotifyGreen text-black transition hover:bg-emerald-500">Sign up</Link>
+            </div>
           ) : (
-            <div className="flex items-center gap-3">
-              <div className="text-sm text-gray-300">{auth.user.display_name}</div>
-              {auth.isPremium ? (
-                <div className="text-xs px-2 py-1 bg-green-600 text-black rounded">Premium</div>
-              ) : (
-                <div className="text-xs px-2 py-1 bg-white/5 rounded">Free</div>
-              )}
-              <button onClick={auth.logout} className="text-sm px-3 py-1 bg-white/5 hover:bg-white/10 rounded">Logout</button>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="text-sm text-gray-200 truncate max-w-[120px]">{auth.user.display_name}</div>
+              <button onClick={auth.logout} className="text-sm px-4 py-2 bg-white/10 hover:bg-white/15 rounded-full transition">Logout</button>
             </div>
           )}
         </nav>

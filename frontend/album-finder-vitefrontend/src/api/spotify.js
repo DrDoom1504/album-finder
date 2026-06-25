@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const API = axios.create({
-  baseURL: "http://localhost:5000", // adjust to your backend
+  baseURL: API_BASE,
   timeout: 10000,
 });
 
@@ -33,5 +35,31 @@ export const getArtistTopTracks = async (artistId) => {
 
 export const getAlbumDetails = async (albumId) => {
   const res = await API.get(`/api/album/detail?albumId=${encodeURIComponent(albumId)}`);
+  return res.data;
+};
+
+export const saveSearchHistory = async ({ artistId, artistName, artistImage, query }) => {
+  const res = await API.post(
+    "/api/search/history",
+    { artistId, artistName, artistImage, query },
+    { withCredentials: true }
+  );
+  return res.data;
+};
+
+export const loadSearchHistory = async () => {
+  const res = await API.get("/api/search/history", { withCredentials: true });
+  return res.data.history || [];
+};
+
+export const deleteSearchHistoryItem = async (historyId) => {
+  const res = await API.delete(`/api/search/history/${encodeURIComponent(historyId)}`, {
+    withCredentials: true,
+  });
+  return res.data;
+};
+
+export const clearSearchHistory = async () => {
+  const res = await API.delete("/api/search/history", { withCredentials: true });
   return res.data;
 };

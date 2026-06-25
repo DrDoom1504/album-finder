@@ -99,7 +99,7 @@ export async function getAlbum(artistId) {
         });
 
         const cleanedAlbums = Object.values(unique);
-        return cleanedAlbums.slice(0, 5);
+        return cleanedAlbums;
 
     } catch (error) {
         console.error("Error fetching albums:", error.message);

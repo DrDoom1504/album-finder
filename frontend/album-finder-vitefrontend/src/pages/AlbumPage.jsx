@@ -47,12 +47,14 @@ export default function AlbumPage() {
 
   return (
     <div className="pb-32">
-      <div className="flex gap-6 items-start mb-6">
-        <img
-          src={album.images?.[0]?.url}
-          alt={album.name}
-          className="w-56 h-56 object-cover rounded-lg"
-        />
+      <div className="glass-panel rounded-[32px] border border-white/10 p-6 mb-6">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          <img
+            src={album.images?.[0]?.url}
+            alt={album.name}
+            className="w-full max-w-[320px] h-auto rounded-3xl object-cover shadow-2xl shadow-black/50"
+          />
+        </div>
 
         <div>
           <h1 className="text-3xl font-bold mb-2">{album.name}</h1>

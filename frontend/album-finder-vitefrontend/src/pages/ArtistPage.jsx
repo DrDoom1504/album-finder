@@ -10,7 +10,6 @@ export default function ArtistPage() {
   const [topTracks, setTopTracks] = useState([]);
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingTracks, setLoadingTracks] = useState(false);
 
   useEffect(() => {
     async function loadArtistData() {
@@ -56,34 +55,37 @@ export default function ArtistPage() {
   return (
     <div>
       {/* Artist Header */}
-      <div className="flex items-center gap-6 mb-8">
-        <img
-          src={artist.images?.[0]?.url}
-          alt={artist.name}
-          className="w-40 h-40 rounded-lg object-cover shadow-lg"
-        />
-        <div>
-          <h1 className="text-4xl font-bold mb-2">{artist.name}</h1>
-          <div className="text-sm text-gray-400 mb-4">
-            {artist.followers?.total?.toLocaleString()} followers
-            {artist.genres && artist.genres.length > 0 && (
-              <> • {artist.genres.join(", ")}</>
-            )}
-          </div>
-          <div className="flex gap-3">
-            <Link
-              to={`/artist/${id}/albums`}
-              className="px-6 py-2 rounded-full bg-green-500 hover:bg-green-600 text-black font-semibold transition"
-            >
-              View All Albums
-            </Link>
+      <div className="glass-panel rounded-[32px] border border-white/10 p-6 mb-8">
+        <div className="flex flex-col lg:flex-row items-start gap-6">
+          <img
+            src={artist.images?.[0]?.url}
+            alt={artist.name}
+            className="w-40 h-40 rounded-3xl object-cover shadow-2xl shadow-black/50"
+          />
+          <div className="flex-1">
+            <h1 className="text-5xl font-bold mb-3 tracking-tight">{artist.name}</h1>
+            <div className="text-sm text-muted mb-4">
+              {artist.followers?.total?.toLocaleString()} followers
+              {artist.genres && artist.genres.length > 0 && (
+                <> • {artist.genres.join(", ")}</>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to={`/artist/${id}/albums`}
+                className="px-6 py-3 rounded-full bg-spotifyGreen text-black font-semibold hover:bg-emerald-500 transition"
+              >
+                View All Albums
+              </Link>
+              <div className="rounded-full border border-white/10 px-4 py-2 text-sm text-muted">Top tracks & albums from Spotify</div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Top Tracks Section */}
       <section className="mb-12">
-        <TopTracksDisplay tracks={topTracks} loading={loadingTracks} />
+        <TopTracksDisplay tracks={topTracks} loading={loading} />
       </section>
 
       {/* Recent Albums Section */}

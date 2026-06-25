@@ -1,6 +1,16 @@
 import express from "express";
 import fetch from "node-fetch";
 import crypto from "crypto";
+import {
+  createUser,
+  findUserByEmail,
+  findUserBySpotifyId,
+  updateUserSpotifyId,
+  createLocalSession,
+  getUserBySession,
+  deleteLocalSession,
+  validatePassword,
+} from "../utils/authHelpers.js";
 
 const router = express.Router();
 
@@ -75,14 +85,35 @@ router.get("/callback", async (req, res) => {
     const tokenJson = await tokenRes.json();
     if (!tokenRes.ok) return res.status(500).json(tokenJson);
 
-    const { refresh_token } = tokenJson;
+    const { refresh_token, access_token } = tokenJson;
     const sessionId = crypto.randomBytes(16).toString("hex");
     SESSIONS[sessionId] = { refresh_token };
 
-  
-    res.cookie("sid", sessionId, { httpOnly: true, sameSite: "lax" });
+    const profileRes = await fetch("https://api.spotify.com/v1/me", {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    const profile = await profileRes.json();
+    if (!profileRes.ok) return res.status(500).json(profile);
 
-    res.redirect(FRONTEND_URL || "/");
+    let user = await findUserBySpotifyId(profile.id);
+    if (!user) {
+      const existingByEmail = profile.email ? await findUserByEmail(profile.email) : null;
+      if (existingByEmail) {
+        await updateUserSpotifyId(existingByEmail.id, profile.id);
+        user = existingByEmail;
+      } else {
+        user = await createUser({
+          email: profile.email || `${profile.id}@spotify.local`,
+          displayName: profile.display_name || profile.id,
+          spotifyId: profile.id,
+        });
+      }
+    }
+
+    const localSessionId = await createLocalSession(user.id);
+    res.cookie("local_sid", localSessionId, { httpOnly: true, sameSite: "lax" });
+    res.cookie("spotify_sid", sessionId, { httpOnly: true, sameSite: "lax" });
+    res.redirect(FRONTEND_URL);
   } catch (err) {
     console.error("Error in /auth/callback:", err);
     res.status(500).send("Auth callback failed");
@@ -91,7 +122,7 @@ router.get("/callback", async (req, res) => {
 
 router.get("/refresh", async (req, res) => {
   try {
-    const sessionId = req.cookies?.sid;
+    const sessionId = req.cookies?.spotify_sid;
     if (!sessionId || !SESSIONS[sessionId]) return res.status(401).json({ error: "Not authenticated" });
 
     const { refresh_token } = SESSIONS[sessionId];
@@ -119,7 +150,15 @@ router.get("/refresh", async (req, res) => {
 
 router.get("/me", async (req, res) => {
   try {
-    const sessionId = req.cookies?.sid;
+    const localSessionId = req.cookies?.local_sid;
+    if (localSessionId) {
+      const user = await getUserBySession(localSessionId);
+      if (user) {
+        return res.json({ profile: { email: user.email, display_name: user.display_name, local: true } });
+      }
+    }
+
+    const sessionId = req.cookies?.spotify_sid;
     if (!sessionId || !SESSIONS[sessionId]) return res.status(401).json({ error: "Not authenticated" });
 
     const { refresh_token } = SESSIONS[sessionId];
@@ -149,11 +188,62 @@ router.get("/me", async (req, res) => {
   }
 });
 
-router.get("/logout", (req, res) => {
-  const sessionId = req.cookies?.sid;
-  if (sessionId) delete SESSIONS[sessionId];
-  res.clearCookie("sid");
+router.get("/logout", async (req, res) => {
+  const spotifySessionId = req.cookies?.spotify_sid;
+  const localSessionId = req.cookies?.local_sid;
+  if (spotifySessionId) delete SESSIONS[spotifySessionId];
+  if (localSessionId) await deleteLocalSession(localSessionId);
+  res.clearCookie("spotify_sid");
+  res.clearCookie("local_sid");
   res.json({ ok: true });
+});
+
+router.post("/local/signup", async (req, res) => {
+  try {
+    const { email, password, displayName } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    const existing = await findUserByEmail(email);
+    if (existing) {
+      return res.status(409).json({ error: "Email is already registered" });
+    }
+
+    const user = await createUser({ email, password, displayName });
+    const sessionId = await createLocalSession(user.id);
+    res.cookie("local_sid", sessionId, { httpOnly: true, sameSite: "lax" });
+    res.json({ profile: { email: user.email, display_name: user.display_name, local: true } });
+  } catch (err) {
+    console.error("Signup failed", err);
+    res.status(500).json({ error: "Signup failed" });
+  }
+});
+
+router.post("/local/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    const user = await findUserByEmail(email);
+    if (!user) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const valid = await validatePassword(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const sessionId = await createLocalSession(user.id);
+    res.cookie("local_sid", sessionId, { httpOnly: true, sameSite: "lax" });
+    res.json({ profile: { email: user.email, display_name: user.display_name, local: true } });
+  } catch (err) {
+    console.error("Login failed", err);
+    res.status(500).json({ error: "Login failed" });
+  }
 });
 
 export default router;

@@ -9,15 +9,15 @@ export default function AlbumCard({ album }) {
   return (
     <Link
       to={`/album/${album.id}`}
-      className="group flex flex-col cursor-pointer transition-transform duration-300 hover:scale-105 w-full"
+      className="group flex flex-col cursor-pointer transition-transform duration-300 hover:-translate-y-1 min-w-[200px] max-w-[260px]"
     >
-      {/* Album Image Container */}
-      <div className="relative w-full aspect-square overflow-hidden rounded-lg mb-4 shadow-lg bg-gray-900">
+      <div className="relative w-full aspect-square overflow-hidden rounded-3xl mb-4 shadow-2xl shadow-black/40 bg-[#0b0b0b] border border-white/5">
         <img
           src={imgSrc}
           alt={album.name}
-          className="w-full h-full object-cover group-hover:brightness-75 transition duration-300"
+          className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/0 opacity-0 group-hover:opacity-100 transition duration-300" />
         
         {/* Play Button on Hover */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 bg-black/30">

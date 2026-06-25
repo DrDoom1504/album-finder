@@ -1,10 +1,8 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
+import { AuthContext } from "./authContextValue";
+import { recentSearchesStorage } from "../utils/storage";
 
-const AuthContext = createContext(null);
-
-export function useAuth() {
-  return useContext(AuthContext);
-}
+const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -12,10 +10,8 @@ export function AuthProvider({ children }) {
   const [isPremium, setIsPremium] = useState(false);
   const [deviceId, setDeviceId] = useState(null);
   const playerRef = useRef(null);
-  // Backend is running on port 5000 in this environment
-  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  async function fetchMe() {
+  const fetchMe = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: "include" });
       if (!res.ok) return null;
@@ -24,27 +20,29 @@ export function AuthProvider({ children }) {
       setAccessToken(json.access_token);
       setIsPremium(json.profile.product === "premium");
       return json;
-    } catch (err) {
+    } catch {
       return null;
     }
-  }
+  }, []);
 
-  async function refreshAccessToken() {
+  const refreshAccessToken = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/api/auth/refresh`, { credentials: "include" });
       if (!res.ok) return null;
       const json = await res.json();
       setAccessToken(json.access_token);
       return json.access_token;
-    } catch (err) {
+    } catch {
       return null;
     }
-  }
+  }, []);
 
  
   useEffect(() => {
+    // Restore any existing cookie-backed session when the app boots.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchMe();
-  }, []);
+  }, [fetchMe]);
 
   
   useEffect(() => {
@@ -72,13 +70,13 @@ export function AuthProvider({ children }) {
       });
 
       player.addListener("not_ready", ({ device_id }) => {
-        if (device_id === deviceId) setDeviceId(null);
+        setDeviceId((currentDeviceId) => (device_id === currentDeviceId ? null : currentDeviceId));
       });
 
       player.connect();
       playerRef.current = player;
     }
-  }, [isPremium]);
+  }, [isPremium, refreshAccessToken]);
 
   async function logout() {
     await fetch(`${API_BASE}/api/auth/logout`, { credentials: "include" });
@@ -86,6 +84,44 @@ export function AuthProvider({ children }) {
     setAccessToken(null);
     setIsPremium(false);
     setDeviceId(null);
+    recentSearchesStorage.clearAll();
+  }
+
+  async function authPost(path, body) {
+    try {
+      const res = await fetch(`${API_BASE}${path}`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      return { ok: res.ok, json };
+    } catch {
+      return { ok: false, json: { error: "Network error" } };
+    }
+  }
+
+  async function loginLocal({ email, password }) {
+    const { ok, json } = await authPost("/api/auth/local/login", { email, password });
+    if (!ok) return { ok: false, error: json.error || "Login failed" };
+    setUser(json.profile);
+    setAccessToken(null);
+    setIsPremium(false);
+    setDeviceId(null);
+    return { ok: true };
+  }
+
+  async function signupLocal({ email, password, displayName }) {
+    const { ok, json } = await authPost("/api/auth/local/signup", { email, password, displayName });
+    if (!ok) return { ok: false, error: json.error || "Signup failed" };
+    setUser(json.profile);
+    setAccessToken(null);
+    setIsPremium(false);
+    setDeviceId(null);
+    return { ok: true };
   }
 
   async function playSpotifyTrack(trackId) {
@@ -113,6 +149,8 @@ export function AuthProvider({ children }) {
     refreshAccessToken,
     playSpotifyTrack,
     login: () => (window.location.href = `${API_BASE}/api/auth/login`),
+    loginLocal,
+    signupLocal,
     logout,
   };
 

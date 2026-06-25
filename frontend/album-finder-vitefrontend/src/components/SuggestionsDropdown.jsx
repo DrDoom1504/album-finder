@@ -1,4 +1,5 @@
 import React from "react";
+import { recentSearchesStorage } from "../utils/storage.js";
 
 export default function SuggestionsDropdown({
   isOpen,
@@ -14,13 +15,15 @@ export default function SuggestionsDropdown({
 
   const showSuggestions = query && query.trim().length > 0;
   const showRecent = !query || (!query.trim() && recentSearches.length > 0);
+  const visibleRecentSearches = recentSearches.slice(0, recentSearchesStorage.MAX_ITEMS);
 
   return (
     <div
       className="
         absolute left-0 top-full mt-2 w-full 
+        max-h-[22rem] overflow-y-auto
         bg-[#0c0c0c] border border-white/10 
-        rounded-xl shadow-2xl overflow-hidden z-50 
+        rounded-xl shadow-2xl z-[100] 
         animate-fadeIn
       "
       onMouseDown={(e) => e.preventDefault()}
@@ -70,9 +73,9 @@ export default function SuggestionsDropdown({
             </button>
           </div>
 
-          {recentSearches.map((r) => (
+          {visibleRecentSearches.map((r) => (
             <div
-              key={r.id}
+              key={r.historyId ?? r.id}
               className="px-4 py-3 hover:bg-white/5 flex items-center justify-between transition"
             >
               <div
@@ -80,14 +83,14 @@ export default function SuggestionsDropdown({
                 onMouseDown={() => onSelectArtist(r.id, r.name)}
               >
                 {r.image ? (
-                  <img src={r.image} className="w-10 h-10 rounded-full object-cover" />
+                  <img src={r.image} alt={r.name} className="w-10 h-10 rounded-full object-cover" />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-white/10" />
                 )}
 
                 <div>
                   <div className="font-medium">{r.name}</div>
-                  <div className="text-xs text-muted">{r.followers?.toLocaleString()}</div>
+                  <div className="text-xs text-muted">{r.followers != null ? r.followers.toLocaleString() : ""}</div>
                 </div>
               </div>
 
@@ -95,9 +98,10 @@ export default function SuggestionsDropdown({
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  onRemoveRecent(r.id);
+                  onRemoveRecent(r.historyId ?? r.id);
                 }}
                 className="text-sm text-rose-400"
+                aria-label={`Remove ${r.name} from recent searches`}
               >
                 ✕
               </button>
