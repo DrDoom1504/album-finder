@@ -1,0 +1,58 @@
+package.json
+README.md
+.env.example
+.gitignore
+backend/
+  package.json
+  db-init.sql
+  src/
+    db.js
+    server.js
+    routes/
+      albumRoutes.js
+      artistRoutes.js
+      authRoutes.js
+      searchRoutes.js
+    services/
+      spotifyServices.js
+    utils/
+      authHelpers.js
+      getAccessToken.js
+frontend/
+  album-finder-vitefrontend/
+    package.json
+    README.md
+    vite.config.js
+    postcss.config.js
+    tailwind.config.js
+    eslint.config.js
+    index.html
+    public/
+    src/
+      main.jsx
+      App.jsx
+      index.css
+      api/
+        spotify.js
+      assets/
+      components/
+        AlbumCard.jsx
+        Header.jsx
+        SearchBar.jsx
+        SuggestionsDropdown.jsx
+        TopTracksDisplay.jsx
+        TrackList.jsx
+      context/
+        AuthContext.jsx
+        authContextValue.js
+        useAuth.js
+      pages/
+        Home.jsx
+        AlbumPage.jsx
+        ArtistPage.jsx
+        ArtistAlbumPage.jsx
+        AuthLanding.jsx
+        Login.jsx
+        Signup.jsx
+      utils/
+        storage.js
