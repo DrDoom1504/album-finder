@@ -21,10 +21,20 @@ const {
   SPOTIFY_CLIENT_SECRET,
   SPOTIFY_REDIRECT_URI,
   FRONTEND_URL = "http://localhost:5173",
+  COOKIE_SECURE = "false",
+  COOKIE_SAME_SITE = "lax",
 } = process.env;
 
 function base64Credentials() {
   return Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString("base64");
+}
+
+function buildCookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: COOKIE_SAME_SITE,
+    secure: COOKIE_SECURE === "true",
+  };
 }
 
 router.get("/login", (_req, res) => {
@@ -111,8 +121,9 @@ router.get("/callback", async (req, res) => {
     }
 
     const localSessionId = await createLocalSession(user.id);
-    res.cookie("local_sid", localSessionId, { httpOnly: true, sameSite: "lax" });
-    res.cookie("spotify_sid", sessionId, { httpOnly: true, sameSite: "lax" });
+    const cookieOptions = buildCookieOptions();
+    res.cookie("local_sid", localSessionId, cookieOptions);
+    res.cookie("spotify_sid", sessionId, cookieOptions);
     res.redirect(FRONTEND_URL);
   } catch (err) {
     console.error("Error in /auth/callback:", err);
@@ -193,8 +204,9 @@ router.get("/logout", async (req, res) => {
   const localSessionId = req.cookies?.local_sid;
   if (spotifySessionId) delete SESSIONS[spotifySessionId];
   if (localSessionId) await deleteLocalSession(localSessionId);
-  res.clearCookie("spotify_sid");
-  res.clearCookie("local_sid");
+  const cookieOptions = buildCookieOptions();
+  res.clearCookie("spotify_sid", cookieOptions);
+  res.clearCookie("local_sid", cookieOptions);
   res.json({ ok: true });
 });
 
@@ -212,7 +224,7 @@ router.post("/local/signup", async (req, res) => {
 
     const user = await createUser({ email, password, displayName });
     const sessionId = await createLocalSession(user.id);
-    res.cookie("local_sid", sessionId, { httpOnly: true, sameSite: "lax" });
+    res.cookie("local_sid", sessionId, buildCookieOptions());
     res.json({ profile: { email: user.email, display_name: user.display_name, local: true } });
   } catch (err) {
     console.error("Signup failed", err);
@@ -238,7 +250,7 @@ router.post("/local/login", async (req, res) => {
     }
 
     const sessionId = await createLocalSession(user.id);
-    res.cookie("local_sid", sessionId, { httpOnly: true, sameSite: "lax" });
+    res.cookie("local_sid", sessionId, buildCookieOptions());
     res.json({ profile: { email: user.email, display_name: user.display_name, local: true } });
   } catch (err) {
     console.error("Login failed", err);

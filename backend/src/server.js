@@ -16,10 +16,14 @@ console.log("[env] SPOTIFY_REDIRECT_URI=", process.env.SPOTIFY_REDIRECT_URI);
 const app = express();
 const frontendUrl = process.env.FRONTEND_URL || "http://127.0.0.1:5173";
 
+if (process.env.TRUST_PROXY === "true") {
+  app.set("trust proxy", true);
+}
+
 app.use(cors({
-  origin:frontendUrl,
+  origin: frontendUrl,
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 }));
 
 app.use(cookieParser());
